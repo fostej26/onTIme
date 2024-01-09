@@ -132,14 +132,15 @@ def get_message_datetime(class_datetime, tod_datetime):
     return message_datetime
 
 
-def create_message(class_datetime, tod_datetime):
+def create_message(class_datetime, tod_datetime,i):
     # creates a message that will be sent to the user notifying them of what time they should leave for their event
+    locations, datetimes, events = get_daily_events()
     tod = split_time(tod_datetime)
     class_time = split_time(class_datetime)
     sms_message = (
         f"\nHello!\n"
         f"Just to make sure you are onTime today, \n"
-        f"you will need to leave by {tod} to attend your {class_time} event on time."
+        f"you will need to leave by {tod} to attend your {(events[i])['summary']} event at {class_time} on time."
     )
     return sms_message
 
@@ -157,13 +158,13 @@ def send_message(message, user_phone_num):
         body=message)
 
 
-def send_message_at_time(class_datetime, tod_datetime, start, destination, user_phone_num):
+def send_message_at_time(class_datetime, tod_datetime, start, destination, user_phone_num,i):
     # sends the message at the designated message time
     message_datetime = get_message_datetime(class_datetime, tod_datetime)
     while True:
         if datetime.datetime.now() >= message_datetime:
             tod = get_tod_datetime(class_datetime, start, destination)
-            message = create_message(class_datetime, tod)
+            message = create_message(class_datetime, tod,i)
             send_message(message, user_phone_num)
             print("message sent!")
             break
@@ -177,7 +178,7 @@ def send_message_at_time(class_datetime, tod_datetime, start, destination, user_
 def main():
     user_phone_num = recipients_list[0]
     start_location = input("Enter your home address: ")
-    locations, datetimes = get_daily_events()
+    locations, datetimes, events = get_daily_events()
 
     #for every event in the calendar organized by time, wait until tod-30mins to send message
     #then move to next element
@@ -193,8 +194,9 @@ def main():
         while not message_sent:
             if get_tod_datetime(start, start_location, locations[event]) < datetime.datetime.now():
                 tod_datetime = get_tod_datetime(start, start_location, locations[event])
-                send_message_at_time(start, tod_datetime, start_location, locations[event], user_phone_num)
+                send_message_at_time(start, tod_datetime, start_location, locations[event], user_phone_num,event)
                 message_sent = True
+
 
 
 if __name__ == '__main__':
